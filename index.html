@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cockroach Run Ads</title>
+<style>
+  :root {
+    --bg: #120d26; --panel: #1d1638; --edge: rgba(255,255,255,.12); --fg: #fff6e5; --muted: #b9afd3;
+    --accent: #ffc21a; --teal: #19c3a6; --red: #ff5a6e; --good: #3ddc84;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; padding-bottom: 90px; }
+  header { padding: 18px 16px 8px; max-width: 980px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 22px; flex: 1; min-width: 220px; }
+  header h1 span { color: var(--accent); }
+  main { max-width: 980px; margin: 0 auto; padding: 0 16px; display: grid; gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 16px; }
+  .card h2 { margin: 0 0 4px; font-size: 18px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  label { display: block; font-weight: 600; margin: 10px 0 4px; }
+  input[type=text], input[type=password], input[type=number], textarea {
+    width: 100%; background: #0e0a1f; color: var(--fg); border: 1px solid var(--edge); border-radius: 10px; padding: 9px 11px; font: inherit;
+  }
+  textarea { min-height: 110px; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 9px 14px; cursor: pointer; background: rgba(255,255,255,.1); color: var(--fg); }
+  button.primary { background: var(--accent); color: #241500; }
+  button.teal { background: var(--teal); color: #00241e; }
+  button.danger { background: transparent; color: var(--red); border: 1px solid rgba(255,90,110,.4); }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 14px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.1); }
+  .pill.ok { background: rgba(61,220,132,.18); color: var(--good); }
+  .pill.bad { background: rgba(255,90,110,.18); color: var(--red); }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 12px; }
+  .tab { background: rgba(255,255,255,.06); color: var(--muted); }
+  .tab.on { background: var(--accent); color: #241500; }
+  .tab b { display: inline-block; min-width: 18px; margin-left: 4px; padding: 0 5px; border-radius: 9px; background: rgba(0,0,0,.25); font-size: 12px; }
+  .spot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .spot { grid-template-columns: 1fr; } }
+  .mock { position: relative; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #8ec5ea, #cfe6f5 45%, #6d6a72 46%, #4b4851); aspect-ratio: 16 / 10; }
+  .mock .art { position: absolute; display: grid; place-items: center; overflow: hidden; }
+  .mock .art img { width: 100%; height: 100%; object-fit: contain; }
+  .mock .board { background: #fff; box-shadow: 0 0 0 4px #3a3f4a; }
+  .mock .caption { position: absolute; left: 8px; bottom: 6px; font-size: 12px; background: rgba(0,0,0,.5); padding: 2px 8px; border-radius: 8px; }
+  .ad { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--edge); }
+  .ad .thumb { width: 96px; height: 60px; border-radius: 8px; background: #fff; display: grid; place-items: center; overflow: hidden; }
+  .ad .thumb img { max-width: 100%; max-height: 100%; }
+  .ad.off .thumb { opacity: .35; }
+  .ad .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .ad .actions button { padding: 6px 9px; font-size: 13px; }
+  .switch { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; margin: 8px 0; cursor: pointer; }
+  .switch input { width: 18px; height: 18px; accent-color: var(--teal); }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(18,13,38,.96); border-top: 1px solid var(--edge); padding: 12px 16px; backdrop-filter: blur(6px); }
+  .bar .inner { max-width: 980px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .bar .msg { flex: 1; min-width: 200px; }
+  pre { background: #0e0a1f; border: 1px solid var(--edge); border-radius: 10px; padding: 10px; overflow-x: auto; font-size: 12px; }
+  a { color: var(--teal); }
+  .warn { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🪳 Cockroach Run <span>Ads admin</span></h1>
+  <span id="status" class="pill">Not connected</span>
+</header>
+
+<main>
+  <section class="card" id="connect">
+    <h2>1. Connect to GitHub</h2>
+    <p class="muted small">Ads are saved as <code>config.json</code> in a public GitHub repo, and the game reads that file every minute. To save, this page needs a GitHub token that can write to that one repo. Make a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">fine-grained token</a>: under <b>Repository access</b> pick <b>Only select repositories</b> and choose the ads repo, then set <b>Contents</b> to <b>Read and write</b>. The token stays in this browser only.</p>
+    <div class="grid2">
+      <div><label for="repo">Ads repo (owner/name)</label><input id="repo" type="text" value="nokabir/cockroach-run-ads"></div>
+      <div><label for="branch">Branch</label><input id="branch" type="text" value="main"></div>
+    </div>
+    <label for="token">GitHub token</label>
+    <input id="token" type="password" placeholder="github_pat_…" autocomplete="off">
+    <div class="row" style="margin-top:10px">
+      <label class="switch"><input id="remember" type="checkbox" checked> Remember on this device</label>
+      <button class="teal" id="connectBtn">Connect and load</button>
+      <button id="forget">Forget token</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. In-game ads</h2>
+    <p class="muted small">Paste or upload an SVG for each spot. Several ads in one spot take turns. Use a <code>viewBox</code> with the shape shown, embed any images inside the SVG as data, and use common fonts or convert text to paths. Scripts and links in SVGs are removed.</p>
+    <div class="tabs" id="tabs"></div>
+    <div class="spot">
+      <div>
+        <div class="mock" id="mock"></div>
+        <p class="muted small" id="spotHelp"></p>
+      </div>
+      <div>
+        <div id="adList"></div>
+        <label for="adName">New ad name</label>
+        <input id="adName" type="text" placeholder="eg. Sharma Sweets Diwali">
+        <label for="adSvg">SVG code</label>
+        <textarea id="adSvg" placeholder="&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 600 300&quot;&gt;…&lt;/svg&gt;"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="addAd">Add ad</button>
+          <label class="row" style="margin:0"><input id="adFile" type="file" accept=".svg,image/svg+xml" style="max-width:220px"></label>
+          <button id="sample">Insert sample</button>
+        </div>
+        <p class="small warn" id="adError"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. Google AdMob</h2>
+    <p class="muted small">Paste your AdMob IDs. The test IDs below are Google's own demo ads: keep them until the app is live on Play Store, and never tap your own real ads. The ad unit IDs change in the game within a minute. The <b>App ID</b> is built into the Android app, so after you change it, run the app build again (see the README).</p>
+    <div class="grid2">
+      <div><label for="appId">App ID</label><input id="appId" type="text" placeholder="ca-app-pub-…~…"></div>
+      <div><label for="banner">Banner ad unit</label><input id="banner" type="text" placeholder="ca-app-pub-…/…"></div>
+      <div><label for="interstitial">Interstitial ad unit</label><input id="interstitial" type="text" placeholder="ca-app-pub-…/…"></div>
+      <div><label for="rewarded">Rewarded ad unit</label><input id="rewarded" type="text" placeholder="ca-app-pub-…/…"></div>
+      <div><label for="interstitialEvery">Interstitial after every … runs</label><input id="interstitialEvery" type="number" min="1" max="20" value="3"></div>
+    </div>
+    <div class="row">
+      <label class="switch"><input id="bannerOnMenu" type="checkbox"> Banner on menus</label>
+      <label class="switch"><input id="rewardedRevive" type="checkbox"> Rewarded: continue after a crash</label>
+      <label class="switch"><input id="rewardedShield" type="checkbox"> Rewarded: free shield in the shop</label>
+    </div>
+    <div class="row"><button id="testIds">Use Google test IDs</button></div>
+    <p class="small muted" id="idError"></p>
+    <label>app-ads.txt (put this file at the root of the website you list on Play Store)</label>
+    <pre id="appAds">Enter your App ID to see it.</pre>
+  </section>
+</main>
+
+<div class="bar"><div class="inner">
+  <span class="msg" id="saveMsg">Connect to load the current settings.</span>
+  <button class="primary" id="publish" disabled>Publish to the game</button>
+</div></div>
+
+<script>
+'use strict';
+const SPOTS = {
+  roach: { name: 'Cockroach back', aspect: 1, help: 'A square sticker on the cockroach\'s back, seen from behind all game long. Keep it bold and simple: a logo works best. Suggested viewBox 0 0 400 400, transparent background.' },
+  police: { name: 'Police backs', aspect: 0.85, help: 'A patch on the backs of the two officers chasing you. Suggested viewBox 0 0 340 400, transparent background.' },
+  barricade: { name: 'Barricades', aspect: 4, help: 'A strip on the front of every barricade you jump. Suggested viewBox 0 0 800 200. Shown on a white board.' },
+  banner: { name: 'Road banners', aspect: 6, help: 'A wide banner across the road every ~70 m. Suggested viewBox 0 0 1200 200. Shown on a white board.' },
+  billboard: { name: 'Street billboards', aspect: 2, help: 'Billboards on the pavement every ~50 m, angled to the road. Suggested viewBox 0 0 800 400. Shown on a white board.' },
+};
+const TEST = {
+  appId: 'ca-app-pub-3940256099942544~3347511713',
+  banner: 'ca-app-pub-3940256099942544/9214589741',
+  interstitial: 'ca-app-pub-3940256099942544/1033173712',
+  rewarded: 'ca-app-pub-3940256099942544/5224354917',
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+let config = null;
+let sha = null;
+let tab = 'roach';
+let dirty = false;
+
+function blank() {
+  return { version: 1, updated: '', placements: Object.fromEntries(Object.keys(SPOTS).map((k) => [k, []])), admob: { ...TEST, interstitialEvery: 3, bannerOnMenu: true, rewardedRevive: true, rewardedShield: true } };
+}
+
+// ---- Storage of connection details --------------------------------------
+function loadLocal() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('cr-ads-admin') || '{}');
+    if (saved.repo) $('repo').value = saved.repo;
+    if (saved.branch) $('branch').value = saved.branch;
+    if (saved.token) $('token').value = saved.token;
+  } catch {}
+}
+function saveLocal() {
+  try {
+    const data = { repo: $('repo').value.trim(), branch: $('branch').value.trim() };
+    if ($('remember').checked) data.token = $('token').value.trim();
+    localStorage.setItem('cr-ads-admin', JSON.stringify(data));
+  } catch {}
+}
+
+// ---- GitHub ---------------------------------------------------------------
+function api(path, init = {}) {
+  return fetch(`https://api.github.com/repos/${$('repo').value.trim()}${path}`, {
+    ...init,
+    headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${$('token').value.trim()}`, 'X-GitHub-Api-Version': '2022-11-28', ...(init.headers || {}) },
+  });
+}
+function utf8ToB64(text) {
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function b64ToUtf8(b64) {
+  const bin = atob(b64.replace(/\s/g, ''));
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+async function connect() {
+  saveLocal();
+  setStatus('Connecting…');
+  try {
+    const repo = await api('');
+    if (repo.status === 401) throw new Error('The token was refused. Check it was copied fully and has not expired.');
+    if (repo.status === 404) throw new Error('Repo not found, or the token cannot see it. Give the token access to this repo.');
+    if (!repo.ok) throw new Error(`GitHub said ${repo.status}`);
+    const info = await repo.json();
+    if (info.private) $('saveMsg').textContent = 'Warning: this repo is private, so the game cannot read it. Make it public.';
+    if (info.permissions && !info.permissions.push) throw new Error('This token can read the repo but not write to it. Set Contents to Read and write.');
+    const res = await api(`/contents/config.json?ref=${encodeURIComponent($('branch').value.trim())}`);
+    if (res.status === 404) {
+      config = blank();
+      sha = null;
+      setDirty(true, 'No settings file yet. Add ads and press Publish to create it.');
+    } else if (!res.ok) throw new Error(`Could not read config.json (${res.status})`);
+    else {
+      const file = await res.json();
+      sha = file.sha;
+      config = normalise(JSON.parse(b64ToUtf8(file.content)));
+      setDirty(false, `Loaded. Last published ${config.updated ? new Date(config.updated).toLocaleString() : 'never'}.`);
+    }
+    setStatus(`Connected to ${$('repo').value.trim()}`, true);
+    $('publish').disabled = false;
+    render();
+  } catch (e) {
+    setStatus('Not connected', false);
+    $('saveMsg').textContent = e.message;
+  }
+}
+
+async function publish() {
+  readAdmob();
+  const problem = admobProblem();
+  if (problem && !confirm(`${problem}\n\nPublish anyway?`)) return;
+  $('publish').disabled = true;
+  $('saveMsg').textContent = 'Publishing…';
+  config.updated = new Date().toISOString();
+  const body = { message: `Update ads (${config.updated})`, content: utf8ToB64(JSON.stringify(config, null, 2) + '\n'), branch: $('branch').value.trim() };
+  if (sha) body.sha = sha;
+  try {
+    let res = await api('/contents/config.json', { method: 'PUT', body: JSON.stringify(body) });
+    if (res.status === 404 || res.status === 422) {
+      // Empty repo or missing branch: let GitHub use its default branch.
+      delete body.branch;
+      res = await api('/contents/config.json', { method: 'PUT', body: JSON.stringify(body) });
+    }
+    if (res.status === 409) throw new Error('Someone else published in the meantime. Press Connect to reload, then redo your change.');
+    if (!res.ok) throw new Error(`GitHub said ${res.status}: ${(await res.json()).message || ''}`);
+    const out = await res.json();
+    sha = out.content.sha;
+    setDirty(false, '');
+    $('saveMsg').innerHTML = `Published ✓ Players see it within about a minute. <a href="${out.commit.html_url}" target="_blank" rel="noopener">View change</a>`;
+  } catch (e) {
+    $('saveMsg').textContent = e.message;
+  }
+  $('publish').disabled = false;
+}
+
+function setStatus(text, ok) {
+  $('status').textContent = text;
+  $('status').className = `pill ${ok === true ? 'ok' : ok === false ? 'bad' : ''}`;
+}
+function setDirty(value, msg) {
+  dirty = value;
+  if (msg !== undefined) $('saveMsg').textContent = msg || (value ? 'Unsaved changes: press Publish to send them to the game.' : 'All changes published.');
+}
+
+function normalise(c) {
+  const out = blank();
+  for (const k of Object.keys(SPOTS)) out.placements[k] = Array.isArray(c?.placements?.[k]) ? c.placements[k] : [];
+  out.admob = { ...out.admob, ...(c?.admob || {}) };
+  out.updated = c?.updated || '';
+  return out;
+}
+
+// ---- SVG ------------------------------------------------------------------
+function cleanSvg(text) {
+  text = String(text || '').trim();
+  const start = text.search(/<svg[\s>]/i);
+  if (start < 0) throw new Error('That is not SVG code: it should start with <svg …>.');
+  text = text.slice(start);
+  const end = text.toLowerCase().lastIndexOf('</svg>');
+  if (end < 0) throw new Error('The SVG is cut off: it should end with </svg>.');
+  text = text.slice(0, end + 6);
+  const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+  if (doc.querySelector('parsererror')) throw new Error('The SVG has an error and cannot be read. Try exporting it again.');
+  const svg = doc.documentElement;
+  svg.querySelectorAll('script, foreignObject').forEach((n) => n.remove());
+  for (const el of [svg, ...svg.querySelectorAll('*')]) {
+    for (const attr of [...el.attributes]) {
+      const name = attr.name.toLowerCase();
+      const value = attr.value.trim().toLowerCase();
+      if (name.startsWith('on') || ((name === 'href' || name === 'xlink:href') && value.startsWith('javascript:'))) el.removeAttribute(attr.name);
+    }
+    if (el.tagName.toLowerCase() === 'a') el.replaceWith(...el.childNodes);
+  }
+  if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  if (!svg.getAttribute('viewBox') && svg.getAttribute('width') && svg.getAttribute('height')) svg.setAttribute('viewBox', `0 0 ${parseFloat(svg.getAttribute('width'))} ${parseFloat(svg.getAttribute('height'))}`);
+  const out = new XMLSerializer().serializeToString(svg);
+  if (out.length > 300000) throw new Error(`The SVG is ${Math.round(out.length / 1024)} KB; keep it under 300 KB (shrink embedded images).`);
+  return out;
+}
+const svgUrl = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+function externalRefs(svg) {
+  return /(href|src)\s*=\s*["']https?:/i.test(svg) || /@import|url\(\s*["']?https?:/i.test(svg);
+}
+
+function sampleSvg(spot) {
+  const a = SPOTS[spot].aspect;
+  const w = Math.round(400 * a);
+  const h = 400;
+  const board = SPOTS[spot].aspect >= 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">` +
+    (board ? `<rect width="${w}" height="${h}" fill="#ffcf33"/>` : `<circle cx="${w / 2}" cy="${h / 2}" r="${Math.min(w, h) / 2 - 8}" fill="#ffcf33" stroke="#c62828" stroke-width="16"/>`) +
+    `<text x="${w / 2}" y="${h / 2 + 40}" font-family="Arial, sans-serif" font-weight="bold" font-size="${board ? 150 : 110}" text-anchor="middle" fill="#c62828">${board ? 'YOUR AD' : 'AD'}</text></svg>`;
+}
+
+// ---- Rendering ------------------------------------------------------------
+function render() {
+  if (!config) config = blank();
+  $('tabs').innerHTML = Object.entries(SPOTS).map(([k, s]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${s.name}<b>${config.placements[k].filter((a) => a.enabled !== false).length}</b></button>`).join('');
+  $('spotHelp').textContent = SPOTS[tab].help;
+  renderMock();
+  const list = config.placements[tab];
+  $('adList').innerHTML = list.length
+    ? list.map((ad, i) => `<div class="ad ${ad.enabled === false ? 'off' : ''}">
+        <div class="thumb"><img alt="" src="${svgUrl(ad.svg)}"></div>
+        <div><input type="text" value="${esc(ad.name || '')}" data-rename="${i}" aria-label="Ad name">
+          <label class="switch small"><input type="checkbox" data-toggle="${i}" ${ad.enabled === false ? '' : 'checked'}> Showing in game</label></div>
+        <div class="actions"><button data-up="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button data-down="${i}" ${i === list.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button class="danger" data-del="${i}">Delete</button></div>
+      </div>`).join('')
+    : '<p class="muted small">No ads here yet. While a spot has no ads, it is hidden in the game.</p>';
+  renderAdmob();
+}
+
+function renderMock() {
+  const ad = config.placements[tab].find((a) => a.enabled !== false);
+  const art = ad ? `<img alt="" src="${svgUrl(ad.svg)}">` : '<span class="muted small">your ad</span>';
+  const place = {
+    roach: 'left:42%;top:62%;width:16%;aspect-ratio:1;border-radius:50%;background:#7a3b14;box-shadow:0 0 0 10px #5a2a0e',
+    police: 'left:40%;top:30%;width:20%;aspect-ratio:0.85;background:#c9a77a;box-shadow:0 0 0 14px #c9a77a',
+    barricade: 'left:20%;top:62%;width:60%;aspect-ratio:4',
+    banner: 'left:4%;top:8%;width:92%;aspect-ratio:6',
+    billboard: 'left:56%;top:22%;width:38%;aspect-ratio:2;transform:perspective(400px) rotateY(-28deg)',
+  }[tab];
+  const board = ['barricade', 'banner', 'billboard'].includes(tab) ? 'board' : '';
+  $('mock').innerHTML = `<div class="art ${board}" style="${place}">${art}</div><span class="caption">Preview: ${SPOTS[tab].name}</span>`;
+}
+
+function renderAdmob() {
+  const a = config.admob;
+  for (const k of ['appId', 'banner', 'interstitial', 'rewarded', 'interstitialEvery']) $(k).value = a[k] ?? '';
+  for (const k of ['bannerOnMenu', 'rewardedRevive', 'rewardedShield']) $(k).checked = a[k] !== false;
+  renderAppAds();
+}
+function renderAppAds() {
+  const m = /^ca-app-pub-(\d+)~/.exec($('appId').value.trim());
+  $('appAds').textContent = m ? `google.com, pub-${m[1]}, DIRECT, f08c47fec0942fa0` : 'Enter your App ID to see it.';
+  const p = admobProblem();
+  $('idError').textContent = p || '';
+}
+function readAdmob() {
+  if (!config) return;
+  const a = config.admob;
+  for (const k of ['appId', 'banner', 'interstitial', 'rewarded']) a[k] = $(k).value.trim();
+  a.interstitialEvery = Math.max(1, Math.min(20, parseInt($('interstitialEvery').value, 10) || 3));
+  for (const k of ['bannerOnMenu', 'rewardedRevive', 'rewardedShield']) a[k] = $(k).checked;
+}
+function admobProblem() {
+  const app = $('appId').value.trim();
+  if (app && !/^ca-app-pub-\d+~\d+$/.test(app)) return 'The App ID looks wrong: it should look like ca-app-pub-1234567890123456~1234567890 (with a ~).';
+  for (const k of ['banner', 'interstitial', 'rewarded']) {
+    const v = $(k).value.trim();
+    if (v && !/^ca-app-pub-\d+\/\d+$/.test(v)) return `The ${k} ad unit looks wrong: it should look like ca-app-pub-1234567890123456/1234567890 (with a /).`;
+  }
+  const pubs = new Set(['appId', 'banner', 'interstitial', 'rewarded'].map((k) => (/^ca-app-pub-(\d+)/.exec($(k).value.trim()) || [])[1]).filter(Boolean));
+  if (pubs.size > 1) return 'The IDs come from different AdMob accounts (or mix test and real IDs). Use all test IDs or all of yours.';
+  return '';
+}
+
+// ---- Events ---------------------------------------------------------------
+$('connectBtn').onclick = connect;
+$('forget').onclick = () => {
+  $('token').value = '';
+  try { localStorage.removeItem('cr-ads-admin'); } catch {}
+  setStatus('Not connected', false);
+};
+$('publish').onclick = publish;
+$('tabs').onclick = (e) => {
+  const b = e.target.closest('[data-tab]');
+  if (!b) return;
+  tab = b.dataset.tab;
+  $('adError').textContent = '';
+  render();
+};
+$('adList').onclick = (e) => {
+  const list = config.placements[tab];
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.del !== undefined) {
+    if (!confirm('Delete this ad?')) return;
+    list.splice(+t.dataset.del, 1);
+  } else if (t.dataset.up !== undefined) {
+    const i = +t.dataset.up;
+    [list[i - 1], list[i]] = [list[i], list[i - 1]];
+  } else if (t.dataset.down !== undefined) {
+    const i = +t.dataset.down;
+    [list[i + 1], list[i]] = [list[i], list[i + 1]];
+  } else return;
+  setDirty(true);
+  render();
+};
+$('adList').onchange = (e) => {
+  const list = config.placements[tab];
+  if (e.target.dataset.toggle !== undefined) list[+e.target.dataset.toggle].enabled = e.target.checked;
+  else if (e.target.dataset.rename !== undefined) list[+e.target.dataset.rename].name = e.target.value.trim();
+  else return;
+  setDirty(true);
+  render();
+};
+$('addAd').onclick = () => {
+  $('adError').textContent = '';
+  try {
+    if (!config) config = blank();
+    const svg = cleanSvg($('adSvg').value);
+    if (config.placements[tab].length >= 8) throw new Error('A spot can hold 8 ads. Delete one first.');
+    config.placements[tab].push({ id: Math.random().toString(36).slice(2, 10), name: $('adName').value.trim() || `${SPOTS[tab].name} ad`, svg, enabled: true });
+    if (externalRefs(svg)) $('adError').textContent = 'Added, but this SVG links to files on the internet; those parts will not show in the game. Embed them instead.';
+    $('adSvg').value = '';
+    $('adName').value = '';
+    $('adFile').value = '';
+    setDirty(true);
+    render();
+  } catch (err) {
+    $('adError').textContent = err.message;
+  }
+};
+$('adFile').onchange = async () => {
+  const f = $('adFile').files[0];
+  if (!f) return;
+  $('adSvg').value = await f.text();
+  if (!$('adName').value) $('adName').value = f.name.replace(/\.svg$/i, '');
+};
+$('sample').onclick = () => {
+  $('adSvg').value = sampleSvg(tab);
+  if (!$('adName').value) $('adName').value = 'Sample';
+};
+$('testIds').onclick = () => {
+  for (const k of Object.keys(TEST)) $(k).value = TEST[k];
+  readAdmob();
+  setDirty(true);
+  renderAppAds();
+};
+for (const k of ['appId', 'banner', 'interstitial', 'rewarded', 'interstitialEvery', 'bannerOnMenu', 'rewardedRevive', 'rewardedShield']) {
+  $(k).addEventListener('input', () => {
+    readAdmob();
+    setDirty(true);
+    renderAppAds();
+  });
+}
+window.addEventListener('beforeunload', (e) => {
+  if (dirty) e.preventDefault();
+});
+
+loadLocal();
+render();
+if ($('token').value) connect();
+</script>
+</body>
+</html>
