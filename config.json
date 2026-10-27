@@ -1,8 +1,15 @@
 {
   "version": 1,
-  "updated": "",
+  "updated": "2026-10-27T18:04:22.091Z",
   "placements": {
-    "roach": [],
+    "roach": [
+      {
+        "id": "faksxtqr",
+        "name": "Cockroach back ad",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 300\">\n  <defs>\n    <linearGradient id=\"gold\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop offset=\"0%\" stop-color=\"#FFF0B0\"/>\n      <stop offset=\"45%\" stop-color=\"#D6A84D\"/>\n      <stop offset=\"75%\" stop-color=\"#FFE8A0\"/>\n      <stop offset=\"100%\" stop-color=\"#A87526\"/>\n    </linearGradient>\n  </defs>\n\n  <rect width=\"800\" height=\"300\" rx=\"24\" fill=\"#10131D\"/>\n\n  <g fill=\"none\" stroke=\"url(#gold)\" stroke-width=\"2\">\n    <path d=\"M75 145 Q140 55 220 95\"/>\n    <path d=\"M580 205 Q675 250 735 145\"/>\n    <path d=\"M155 225 Q400 270 645 225\"/>\n  </g>\n\n  <text x=\"400\" y=\"178\" text-anchor=\"middle\" font-family=\"Brush Script MT, cursive\" font-size=\"125\" font-style=\"italic\" fill=\"url(#gold)\" letter-spacing=\"-4\">Surendra</text>\n\n  <path d=\"M255 210 Q400 235 545 210\" fill=\"none\" stroke=\"url(#gold)\" stroke-width=\"2\"/>\n\n  <circle cx=\"235\" cy=\"225\" r=\"4\" fill=\"#E9C56F\"/>\n  <circle cx=\"565\" cy=\"225\" r=\"4\" fill=\"#E9C56F\"/>\n</svg>",
+        "enabled": true
+      }
+    ],
     "police": [],
     "barricade": [],
     "banner": [],
