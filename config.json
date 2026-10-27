@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-27T18:04:22.091Z",
+  "updated": "2026-10-27T18:05:00.480Z",
   "placements": {
     "roach": [
       {
@@ -10,7 +10,14 @@
         "enabled": true
       }
     ],
-    "police": [],
+    "police": [
+      {
+        "id": "eq26nbjm",
+        "name": "Sample",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 340 400\"><circle cx=\"170\" cy=\"200\" r=\"162\" fill=\"#ffcf33\" stroke=\"#c62828\" stroke-width=\"16\"/><text x=\"170\" y=\"240\" font-family=\"Arial, sans-serif\" font-weight=\"bold\" font-size=\"110\" text-anchor=\"middle\" fill=\"#c62828\">AD</text></svg>",
+        "enabled": true
+      }
+    ],
     "barricade": [],
     "banner": [],
     "billboard": []
