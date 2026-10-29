@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-28T04:53:40.185Z",
+  "updated": "2026-10-29T12:53:21.431Z",
   "placements": {
     "roach": [],
     "police": [],
@@ -9,10 +9,10 @@
     "billboard": []
   },
   "admob": {
-    "appId": "ca-app-pub-3940256099942544~3347511713",
-    "banner": "ca-app-pub-3940256099942544/9214589741",
-    "interstitial": "ca-app-pub-3940256099942544/1033173712",
-    "rewarded": "ca-app-pub-3940256099942544/5224354917",
+    "appId": "",
+    "banner": "",
+    "interstitial": "",
+    "rewarded": "",
     "interstitialEvery": 3,
     "bannerOnMenu": false,
     "rewardedRevive": false,
